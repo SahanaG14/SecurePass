@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - mpin: string (required, 4 digits)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: passwords
+    // Document ID: {passwordId}
+    // Fields:
+    //   - uid: string (required)
+    //   - name: string (required)
+    //   - username: string (required)
+    //   - password: string (required)
+    //   - updatedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'mpin', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.mpin is string && data.mpin.matches('^\\d{4}$') &&
+             data.createdAt is string; // Using string ISO format as per app logic
+    }
+
+    function isValidPassword(data) {
+      return data.keys().hasAll(['uid', 'name', 'username', 'password', 'updatedAt']) &&
+             data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.username is string && data.username.size() > 0 && data.username.size() < 100 &&
+             data.password is string && data.password.size() > 0 && data.password.size() < 200 &&
+             data.updatedAt is string;
+    }
+
+    // Rules
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && isValidUser(request.resource.data) && 
+                    request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /passwords/{passwordId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidPassword(request.resource.data);
+      allow update: if isDocOwner() && isValidPassword(request.resource.data) &&
+                    request.resource.data.uid == resource.data.uid;
+      allow delete: if isDocOwner();
+    }
+  }
+}

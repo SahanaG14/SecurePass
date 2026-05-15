@@ -1,0 +1,5 @@
+{
+  "name": "SecurePass Manager",
+  "description": "A secure password manager with MPIN protection and dark mode support.",
+  "requestFramePermissions": []
+}

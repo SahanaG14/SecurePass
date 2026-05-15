@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and security settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID." },
+        "email": { "type": "string", "description": "User email." },
+        "mpin": { "type": "string", "description": "Hashed MPIN for secondary authentication." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "mpin"]
+    },
+    "PasswordEntry": {
+      "title": "Password Entry",
+      "description": "Stored password credentials.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string", "description": "Owner's UID." },
+        "name": { "type": "string", "description": "Service name (e.g., Instagram)." },
+        "username": { "type": "string", "description": "User ID/Username for the service." },
+        "password": { "type": "string", "description": "Password for the service." },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "username", "password"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User security and profile data."
+    },
+    "/passwords/{passwordId}": {
+      "schema": "PasswordEntry",
+      "description": "Encrypted or stored password entries."
+    }
+  }
+}
